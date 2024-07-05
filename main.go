@@ -2,51 +2,88 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
+	"os"
 
-	"github.com/fiatjaf/eventstore/slicestore"
+	"github.com/fiatjaf/eventstore/bolt"
+	"github.com/fiatjaf/khatru"
 	"github.com/fiatjaf/khatru/policies"
 	"github.com/fiatjaf/relay29"
+	"github.com/kelseyhightower/envconfig"
 	"github.com/nbd-wtf/go-nostr"
+	"github.com/rs/zerolog"
 	"golang.org/x/exp/slices"
 )
 
-func main() {
-	relayPrivateKey := nostr.GeneratePrivateKey()
+type Settings struct {
+	Port             string `envconfig:"PORT" default:"5577"`
+	Domain           string `envconfig:"DOMAIN" required:"true"`
+	RelayName        string `envconfig:"RELAY_NAME" required:"true"`
+	RelayPrivkey     string `envconfig:"RELAY_PRIVKEY" required:"true"`
+	RelayDescription string `envconfig:"RELAY_DESCRIPTION"`
+	RelayContact     string `envconfig:"RELAY_CONTACT"`
+	RelayIcon        string `envconfig:"RELAY_ICON"`
+	DatabasePath     string `envconfig:"DATABASE_PATH" default:"./db"`
 
-	state := relay29.Init(relay29.Options{
-		Domain:    "localhost:2929",
-		DB:        &slicestore.SliceStore{},
-		SecretKey: relayPrivateKey,
+	RelayPubkey string `envconfig:"-"`
+}
+
+var (
+	s     Settings
+	db    = &bolt.BoltBackend{}
+	log   = zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stdout}).With().Timestamp().Logger()
+	state *relay29.State
+)
+
+func main() {
+	err := envconfig.Process("", &s)
+	if err != nil {
+		log.Fatal().Err(err).Msg("couldn't process envconfig")
+		return
+	}
+	s.RelayPubkey, _ = nostr.GetPublicKey(s.RelayPrivkey)
+
+	// load db
+	db.Path = s.DatabasePath
+	if err := db.Init(); err != nil {
+		log.Fatal().Err(err).Msg("failed to initialize database")
+		return
+	}
+	log.Debug().Str("path", db.Path).Msg("initialized database")
+
+	state = relay29.Init(relay29.Options{
+		Domain:    "localhost:" + s.Port,
+		DB:        db,
+		SecretKey: s.RelayPrivkey,
 	})
 
 	// init relay
-	state.Relay.Info.Name = "very ephemeral chat relay"
-	state.Relay.Info.PubKey, _ = nostr.GetPublicKey(relayPrivateKey)
-	state.Relay.Info.Description = "everything will be deleted as soon as I turn off my computer"
+	state.Relay.Info.Name = "Communities relay"
+	state.Relay.Info.PubKey, _ = nostr.GetPublicKey(s.RelayPrivkey)
+	state.Relay.Info.Description = "A relay for communities"
+	state.Relay.Info.SupportedNIPs = append(state.Relay.Info.SupportedNIPs, 29)
+
+	state.Relay.StoreEvent = append(state.Relay.StoreEvent, db.SaveEvent)
+	state.Relay.DeleteEvent = append(state.Relay.DeleteEvent, db.DeleteEvent)
 
 	// extra policies
 	state.Relay.RejectEvent = slices.Insert(state.Relay.RejectEvent, 0,
 		policies.PreventLargeTags(64),
-		policies.PreventTooManyIndexableTags(6, []int{9005}, nil),
-		policies.RestrictToSpecifiedKinds(
-			9, 10, 11, 12,
-			30023, 31922, 31923, 9802,
-			9000, 9001, 9002, 9003, 9004, 9005, 9006, 9007,
-			9021,
-		),
+		policies.PreventTooManyIndexableTags(20, []int{9005}, nil),
 		policies.PreventTimestampsInThePast(60),
 		policies.PreventTimestampsInTheFuture(30),
+		rejectCreatingExistingGroups,
 	)
+
+	state.Relay.OnConnect = append(state.Relay.OnConnect, khatru.RequestAuth)
 
 	// http routes
 	state.Relay.Router().HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "nothing to see here, you must use a nip-29 powered client")
 	})
 
-	fmt.Println("running on http://0.0.0.0:2929")
-	if err := http.ListenAndServe(":2929", state.Relay); err != nil {
-		log.Fatal("failed to serve")
+	fmt.Println("running on http://0.0.0.0:" + s.Port)
+	if err := http.ListenAndServe(":"+s.Port, state.Relay); err != nil {
+		log.Fatal().Err(err).Msg("failed to serve")
 	}
 }
