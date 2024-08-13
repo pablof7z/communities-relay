@@ -1,15 +1,15 @@
 module github.com/pablof7z/communities-relay
 
-go 1.22.2
+go 1.22.4
 
 toolchain go1.22.5
 
 require (
-	github.com/fiatjaf/eventstore v0.5.0
-	github.com/fiatjaf/khatru v0.5.0
-	github.com/fiatjaf/relay29 v0.1.0
+	github.com/fiatjaf/eventstore v0.7.1
+	github.com/fiatjaf/khatru v0.7.3
+	github.com/fiatjaf/relay29 v0.2.0
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/nbd-wtf/go-nostr v0.34.0
+	github.com/nbd-wtf/go-nostr v0.34.5
 	github.com/rs/zerolog v1.31.0
 	golang.org/x/exp v0.0.0-20240604190554-fc45aab8b7f8
 )
@@ -43,4 +43,6 @@ require (
 	golang.org/x/sys v0.21.0 // indirect
 )
 
-replace github.com/fiatjaf/relay29 => ../relay29
+replace github.com/fiatjaf/relay29 => /Users/pablofernandez/relay29
+
+replace github.com/fiatjaf/khatru => /Users/pablofernandez/khatru
