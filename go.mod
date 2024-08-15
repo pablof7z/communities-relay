@@ -6,8 +6,8 @@ toolchain go1.22.5
 
 require (
 	github.com/fiatjaf/eventstore v0.7.1
-	github.com/fiatjaf/khatru v0.7.3
-	github.com/fiatjaf/relay29 v0.2.0
+	github.com/fiatjaf/khatru v0.7.5
+	github.com/fiatjaf/relay29 v0.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/nbd-wtf/go-nostr v0.34.5
 	github.com/rs/zerolog v1.31.0
@@ -42,7 +42,3 @@ require (
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
 )
-
-replace github.com/fiatjaf/relay29 => /Users/pablofernandez/relay29
-
-replace github.com/fiatjaf/khatru => /Users/pablofernandez/khatru
