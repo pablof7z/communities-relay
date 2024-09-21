@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/fiatjaf/eventstore"
-	"github.com/fiatjaf/eventstore/bolt"
+	"github.com/fiatjaf/eventstore/lmdb"
 	"github.com/fiatjaf/khatru"
 	"github.com/fiatjaf/khatru/policies"
 	"github.com/fiatjaf/relay29"
@@ -33,7 +34,7 @@ type Settings struct {
 
 var (
 	s     Settings
-	db    = &bolt.BoltBackend{}
+	db    = &lmdb.LMDBBackend{}
 	log   = zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stdout}).With().Timestamp().Logger()
 	relay *khatru.Relay
 	state *relay29.State
@@ -89,8 +90,8 @@ func main() {
 	// extra policies
 	relay.RejectEvent = slices.Insert(
 		relay.RejectEvent, 0,
-		policies.PreventTimestampsInThePast(60),
-		policies.PreventTimestampsInTheFuture(30),
+		policies.PreventTimestampsInThePast(60*time.Second),
+		policies.PreventTimestampsInTheFuture(30*time.Second),
 		rejectCreatingExistingGroups,
 	)
 
@@ -128,6 +129,7 @@ func main() {
 	publicRelay.DeleteEvent = append(publicRelay.DeleteEvent, publicStore.DeleteEvent)
 
 	router := khatru.NewRouter()
+	router.Info.SupportedNIPs = append(relay.Info.SupportedNIPs, 29)
 
 	router.Route().
 		Req(func(filter nostr.Filter) bool {

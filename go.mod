@@ -1,20 +1,19 @@
 module github.com/pablof7z/communities-relay
 
-go 1.22.4
-
-toolchain go1.22.5
+go 1.23.0
 
 require (
-	github.com/fiatjaf/eventstore v0.7.1
-	github.com/fiatjaf/khatru v0.7.5
-	github.com/fiatjaf/relay29 v0.3.0
+	github.com/fiatjaf/eventstore v0.8.2
+	github.com/fiatjaf/khatru v0.8.1
+	github.com/fiatjaf/relay29 v0.4.0
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/nbd-wtf/go-nostr v0.34.5
+	github.com/nbd-wtf/go-nostr v0.35.0
 	github.com/rs/zerolog v1.31.0
 	golang.org/x/exp v0.0.0-20240604190554-fc45aab8b7f8
 )
 
 require (
+	github.com/PowerDNS/lmdb-go v1.9.2 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.3 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0 // indirect
@@ -30,7 +29,7 @@ require (
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
-	github.com/puzpuzpuz/xsync/v3 v3.1.0 // indirect
+	github.com/puzpuzpuz/xsync/v3 v3.4.0 // indirect
 	github.com/rs/cors v1.11.0 // indirect
 	github.com/savsgio/gotils v0.0.0-20240303185622-093b76447511 // indirect
 	github.com/tidwall/gjson v1.17.1 // indirect
